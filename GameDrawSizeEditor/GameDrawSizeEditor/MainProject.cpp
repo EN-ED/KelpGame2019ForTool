@@ -1,52 +1,8 @@
 #include "MainProject.hpp"
-
-
-
-/// ---------------------------------------------------------------------------------------------------------------------
-void MainProject::TextRead()
-{
-	// 行確認用変数
-	int readCount = 0;
-
-	// ファイルを読み込む
-	std::ifstream readFile("media\\text.csv");
-
-	// 行を取得する
-	std::string readLine = "";
-
-
-	// ファイル読み込み失敗
-	if (readFile.fail())
-	{
-		return;
-	}
-
-
-	// 行ずつ確認
-	while (getline(readFile, readLine))
-	{
-		std::string token;
-		std::istringstream stream(readLine);
-
-		// マップデータ多めに作成
-		int tempReadCount = readCount + 1;
-		vv_csvData.resize(tempReadCount);
-
-		// [,]まで確認
-		while (std::getline(stream, token, ','))
-		{
-			// マップデータに追加
-			vv_csvData[readCount].push_back(token);
-		}
-
-		// 行を加算
-		readCount++;
-	}
-
-
-	// ファイルを閉じる
-	readFile.close();
-}
+#include "InputMouse.hpp"
+#include "InputKey.hpp"
+#include "DxLib.h"
+#include <random>
 
 
 
@@ -68,11 +24,14 @@ void MainProject::TextOutPut()
 	}
 
 
-	saveFile << "キャラクター" << "," << m_charaAreaX << std::endl << "速度詳細XxY" << "," << m_fasterAreaX << "," << m_fasterAreaY << std::endl;
+	saveFile << "soap" << "," << m_charaAreaX << std::endl << "chaser" << "," << m_chaserAreaX << std::endl;
 
 
 	// ファイルを閉じる
 	saveFile.close();
+
+
+	m_saveCount = 255;
 }
 
 
@@ -80,86 +39,48 @@ void MainProject::TextOutPut()
 /// ---------------------------------------------------------------------------------------------------------------------
 MainProject::MainProject()
 {
-	// CSVデータ受け渡し
-	vv_csvData.clear();
-
-	TextRead();
-
 	std::string mediaStr = "media\\";
 	std::string addStr = "";
 
 
 	// 背景
-	addStr = mediaStr + vv_csvData[0][1].c_str();
-	m_backGroundDraw	 = LoadGraph(addStr.c_str());
+	m_backGroundDraw	 = LoadGraph("media\\background.png");
 
 	m_scrollX = 0;
-	m_isScroll = false;
+	m_scrollSpeed = 2;
 
 
-	// キャラクター
-	m_charaXNum			 = atoi(vv_csvData[1][1].c_str());
-
-	m_charaXSize		 = atoi(vv_csvData[2][1].c_str());
-
-	m_charaYNum			 = atoi(vv_csvData[3][1].c_str());
-
-	m_charaYSize		 = atoi(vv_csvData[4][1].c_str());
-
-	m_charaNum			 = atoi(vv_csvData[5][1].c_str());
-	
-	addStr = "";
-	addStr = mediaStr + vv_csvData[6][1].c_str();
-	LoadDivGraph(addStr.c_str(), m_charaNum, m_charaXNum, m_charaYNum, m_charaXSize, m_charaYSize, m_charaDraw);
-	m_charaAreaX = 980;
+	// キャラクター	
+	for (int i = 0; i != m_charaNum; ++i)
+	{
+		std::string str = "media\\anim_blink\\" + std::to_string(i) + ".png";
+		m_charaDraw[i] = LoadGraph(str.c_str());
+	}
+	m_charaAreaX = 284;
+	m_playerDrawAnimCount = 0;
 
 
 	// 追いかけるもの
-	m_chaserXNum = atoi(vv_csvData[7][1].c_str());
-
-	m_chaserXSize = atoi(vv_csvData[8][1].c_str());
-
-	m_chaserYNum = atoi(vv_csvData[9][1].c_str());
-
-	m_chaserYSize = atoi(vv_csvData[10][1].c_str());
-
-	m_chaserNum = atoi(vv_csvData[11][1].c_str());
-
-	addStr = "";
-	addStr = mediaStr + vv_csvData[12][1].c_str();
-	LoadDivGraph(addStr.c_str(), m_chaserNum, m_chaserXNum, m_chaserYNum, m_chaserXSize, m_chaserYSize, m_chaserDraw);
-
-
-	// 障害物
-	addStr = "";
-	addStr = mediaStr + vv_csvData[13][1].c_str();
-	m_garbageDraw		 = LoadGraph(addStr.c_str());
-	GetGraphSize(m_garbageDraw, &m_garbageXSize, &m_garbageYSize);
+	for (int i = 0; i != m_chaserNum; ++i)
+	{
+		std::string str = "media\\tkms_anim01\\" + std::to_string(i) + ".png";
+		m_chaserDraw[i] = LoadGraph(str.c_str());
+	}
+	m_chaserAreaX = 0;
+	m_chaserSpeedCount = 0;
 
 
 	// 地面
-	addStr = "";
-	addStr = mediaStr + vv_csvData[14][1].c_str();
-	m_underGroundDraw	 = LoadGraph(addStr.c_str());
-	GetGraphSize(m_underGroundDraw, &m_underGroundXSize, &m_underGroundYSize);
-
-
-	// 速度詳細
-	addStr = "";
-	addStr = mediaStr + vv_csvData[15][1].c_str();
-	m_fasterDraw		 = LoadGraph(addStr.c_str());
-	GetGraphSize(m_fasterDraw, &m_fasterXSize, &m_fasterYSize);
-	m_fasterAreaX = 1920 - m_fasterXSize - 128;
-	m_fasterAreaY = 128;
+	m_underGroundDraw	 = LoadGraph("media\\underground.png");
 
 
 	// マウス
-	GetMousePoint(&m_mouseX, &m_mouseY);
-	m_preMouseX = m_mouseX;
-	m_preMouseY = m_mouseY;
 	m_isMouseClick = false;
 	m_isClickChara = false;
-	m_isClickFaster = false;
+	m_isClickChaser = false;
+
+
+	m_saveCount = 0;
 }
 
 
@@ -167,7 +88,6 @@ MainProject::MainProject()
 /// ---------------------------------------------------------------------------------------------------------------------
 MainProject::~MainProject()
 {
-	std::vector<std::vector<std::string>>().swap(vv_csvData);
 	DeleteGraph(m_backGroundDraw);
 	for (int i = 0; i != m_charaNum; ++i)
 	{
@@ -177,9 +97,7 @@ MainProject::~MainProject()
 	{
 		DeleteGraph(m_chaserDraw[i]);
 	}
-	DeleteGraph(m_garbageDraw);
 	DeleteGraph(m_underGroundDraw);
-	DeleteGraph(m_fasterDraw);
 }
 
 
@@ -192,28 +110,29 @@ void MainProject::Draw()
 	DrawGraph(m_scrollX + 1920, 0, m_backGroundDraw, true);
 
 	// 地面
-	DrawGraph(m_scrollX, 1080 - m_underGroundYSize, m_underGroundDraw, true);
-	DrawGraph(m_scrollX + 1920, 1080 - m_underGroundYSize, m_underGroundDraw, true);
+	DrawGraph(m_scrollX, 1080 - 128, m_underGroundDraw, true);
+	DrawGraph(m_scrollX + 1920, 1080 - 128, m_underGroundDraw, true);
 
 	// 追いかけるもの
-	DrawGraph(0, 1080 - m_underGroundYSize - m_chaserYSize, m_chaserDraw[0], true);
+	DrawGraph(m_chaserAreaX, 1080 - 128 - 512, m_chaserDraw[static_cast<int>(m_chaserSpeedCount / m_chasrArraySpeed)], true);
+	DrawBox(m_chaserAreaX, 1080 - 128 - 512, m_chaserAreaX + 512, 1080 - 128, GetColor(0, 0, 0), false);
+	DrawFormatString(m_chaserAreaX + 492, 1080 - 128 - 512 - 20, GetColor(0, 0, 0), "%d x %d", m_chaserAreaX, 1080 - 128 - 512);
 
 	// キャラクター
-	DrawGraph(m_charaAreaX, 1080 - m_underGroundYSize - m_charaYSize, m_charaDraw[0], true);
-	DrawFormatString(m_charaAreaX, 1080 - m_underGroundYSize - m_charaYSize - 20, GetColor(0, 0, 0), "%d x %d", m_charaAreaX, 1080 - m_underGroundYSize - m_charaYSize);
-
-	// 障害物
-	DrawGraph(980 + 490, 1080 - m_underGroundYSize - m_garbageYSize, m_garbageDraw, true);
-
-	// 速度詳細
-	DrawGraph(m_fasterAreaX, m_fasterAreaY, m_fasterDraw, true);
-	DrawFormatString(m_fasterAreaX, m_fasterAreaY + m_fasterYSize, GetColor(0, 0, 0), "%d x %d : speed %d", m_fasterAreaX, m_fasterAreaY, m_scrollSpeed);
+	DrawGraph(m_charaAreaX, 1080 - 128 - 192, m_charaDraw[static_cast<int>(m_playerDrawAnimCount / m_playerDrawAnimSpeed)], true);
+	DrawBox(m_charaAreaX, 1080 - 128 - 192, m_charaAreaX + 192, 1080 - 128, GetColor(0, 0, 0), false);
+	DrawFormatString(m_charaAreaX, 1080 - 128 - 192 - 20, GetColor(0, 0, 0), "%d x %d", m_charaAreaX, 1080 - 128 - 192);
 
 	// マウス
-	DrawFormatString(m_mouseX, m_mouseY, GetColor(0, 0, 0), "%d x %d", m_mouseX, m_mouseY);
+	DrawFormatString(MouseData::GetMouseArea().x, MouseData::GetMouseArea().y, GetColor(0, 0, 0), "%d x %d", MouseData::GetMouseArea().x, MouseData::GetMouseArea().y);
 
-	// 操作
-	DrawFormatString(10, 0, GetColor(0, 0, 0), "Zキー：速度アップ\nXキー：速度ダウン\nCキー：速度停止\nWASDキー：速度表示座標移動\n矢印右左：キャラクター座標移動\nキャラクターと速度表示はマウスによる移動可\nBキー：座標保存CSV出力\nMキー：座標リセット");
+
+	SetDrawBlendMode(DX_BLENDMODE_ALPHA, m_saveCount);
+	DrawFormatString(255, 255, GetColor(0, 255, 255), "セーブしましたぁああああああああああああああああああ");
+	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+
+
+	DrawFormatString(0, 0, GetColor(0, 0, 0), "保存：Sキー\n位置リセット：Rキー\n調整：左マウス");
 }
 
 
@@ -221,11 +140,13 @@ void MainProject::Draw()
 /// ---------------------------------------------------------------------------------------------------------------------
 void MainProject::Process()
 {
+	if (++m_playerDrawAnimCount >= m_playerDrawAnimSpeed * m_charaNum) m_playerDrawAnimCount = 0;
+	if (++m_chaserSpeedCount >= m_chasrArraySpeed * m_chaserNum) m_chaserSpeedCount = 0;
+	if (m_saveCount > 0) m_saveCount--;
+
+
 	// マウスの位置を取得する
-	m_preMouseX = m_mouseX;
-	m_preMouseY = m_mouseY;
-	GetMousePoint(&m_mouseX, &m_mouseY);
-	if (MouseData::GetClick(static_cast<int>(CLICK::LEFT)) >= 1)
+	if (MouseData::GetClick(MouseData::ECLICK::LEFT) >= 1)
 	{
 		m_isMouseClick = true;
 	}
@@ -233,110 +154,61 @@ void MainProject::Process()
 	{
 		m_isMouseClick = false;
 		m_isClickChara = false;
-		m_isClickFaster = false;
+		m_isClickChaser = false;
 	}
 
 
 
 	// 位置を初期化する
-	if (KeyData::Get(KEY_INPUT_M) == 1)
+	if (KeyData::Get(KEY_INPUT_R) == 1)
 	{
 		m_charaAreaX = 980;
-		m_fasterAreaX = 1920 - m_fasterXSize - 128;
-		m_fasterAreaY = 128;
-		m_isScroll = false;
-		m_scrollSpeed = 0;
+		m_chaserAreaX = 0;
 		m_scrollX = 0;
 	}
 
 
 	// セーブする
-	if (KeyData::Get(KEY_INPUT_B) == 1)
+	if (KeyData::Get(KEY_INPUT_S) == 1)
 	{
 		TextOutPut();
 	}
 
 
-	// 速度詳細の座標を動かす
-	if (KeyData::Get(KEY_INPUT_W) == 1)
+	// 座標を動かす
+	if (m_isMouseClick)
 	{
-		m_fasterAreaY--;
-	}
-	if (KeyData::Get(KEY_INPUT_S) == 1)
-	{
-		m_fasterAreaY++;
-	}
-	if (KeyData::Get(KEY_INPUT_A) == 1)
-	{
-		m_fasterAreaX--;
-	}
-	if (KeyData::Get(KEY_INPUT_D) == 1)
-	{
-		m_fasterAreaX++;
-	}
-	// マウス
-	if (m_isMouseClick && !m_isClickChara)
-	{
-		if (m_mouseX > m_fasterAreaX
-			&& m_mouseX < m_fasterAreaX + m_fasterXSize
-			&& m_mouseY > m_fasterAreaY
-			&& m_mouseY < m_fasterAreaY + m_fasterYSize)
-		{
-			m_isClickFaster = true;
-		}
-		if (m_isClickFaster)
-		{
-			m_fasterAreaX += (m_mouseX - m_preMouseX);
-			m_fasterAreaY += (m_mouseY - m_preMouseY);
-		}
-	}
-
-
-	// キャラクターの座標を動かす
-	if (KeyData::Get(KEY_INPUT_RIGHT) == 1)
-	{
-		m_charaAreaX++;
-	}
-	if (KeyData::Get(KEY_INPUT_LEFT) == 1)
-	{
-		m_charaAreaX--;
-	}
-	if (m_isMouseClick && !m_isClickFaster)
-	{
-		if (m_mouseX > m_charaAreaX
-			&& m_mouseX < m_charaAreaX + m_fasterXSize
-			&& m_mouseY >  1080 - m_underGroundYSize - m_charaYSize
-			&& m_mouseY < 1080 - m_underGroundYSize)
+		if (MouseData::GetMouseArea().x > m_charaAreaX
+			&& MouseData::GetMouseArea().x < m_charaAreaX + 192
+			&& MouseData::GetMouseArea().y >  1080 - 128 - 192
+			&& MouseData::GetMouseArea().y < 1080 - 128)
 		{
 			m_isClickChara = true;
 		}
 		if (m_isClickChara)
 		{
-			m_charaAreaX += (m_mouseX - m_preMouseX);
+			m_charaAreaX += MouseData::GetMouseMoveValue().x;
+		}
+
+
+		if (MouseData::GetMouseArea().x > m_chaserAreaX
+			&& MouseData::GetMouseArea().x < m_chaserAreaX + 512
+			&& MouseData::GetMouseArea().y >  1080 - 128 - 512
+			&& MouseData::GetMouseArea().y < 1080 - 128)
+		{
+			m_isClickChaser = true;
+		}
+		if (m_isClickChaser)
+		{
+			m_chaserAreaX += MouseData::GetMouseMoveValue().x;
 		}
 	}
 
 
 	// スクロールさせる
-	if (KeyData::Get(KEY_INPUT_Z) == 1)
+	m_scrollX -= m_scrollSpeed;
+	if (m_scrollX <= -1920)
 	{
-		if (!m_isScroll) m_isScroll = true;
-		m_scrollSpeed++;
-	}
-	if (KeyData::Get(KEY_INPUT_X) == 1 && m_scrollSpeed != 0)
-	{
-		m_scrollSpeed--;
-	}
-	if (KeyData::Get(KEY_INPUT_C) == 1)
-	{
-		m_isScroll = false;
-	}
-	if (m_isScroll)
-	{
-		m_scrollX -= m_scrollSpeed;
-		if (m_scrollX <= -1920)
-		{
-			m_scrollX = 0;
-		}
+		m_scrollX = 0;
 	}
 }

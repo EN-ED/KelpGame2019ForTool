@@ -1,4 +1,8 @@
 #include "MainProject.hpp"
+#include "DxLib.h"
+#include "InputKey.hpp"
+#include "InputMouse.hpp"
+
 
 
 // プログラムは WinMain から始まります
@@ -44,10 +48,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 
 	// メインループ
-	while (!ScreenFlip() && !ProcessMessage() && !ClearDrawScreen() && KeyData::CheckEnd())
+	while (!ScreenFlip() && !ProcessMessage() && !ClearDrawScreen() && !KeyData::IsCheckEnd())
 	{
-		MouseData::Mouse_UpDate();
-		MouseWheelData::MouseWheel_Update();
+		MouseData::UpDate();
+		MouseWheelData::UpDate();
 		KeyData::UpDate();
 
 		mainProject.Draw();

@@ -1,74 +1,111 @@
 #include "InputMouse.hpp"
+#include "DxLib.h"
 
 
-//////////////////////////////////////////////マウス関連////////////////////////////////////////////////////
 
-MouseData::MouseData()
+/// ------------------------------------------------------------------------------------------------------------
+
+int MouseData::m_mouse[3];
+int MouseData::m_mouseInput;
+MouseData::MouseXY MouseData::m_preMouseArea;
+MouseData::MouseXY MouseData::m_mouseArea;
+
+
+
+/// ------------------------------------------------------------------------------------------------------------
+void MouseData::UpDate()
 {
+	// PCゲーである以上、マウスのない状態が想定できないのでエラー処理は省く
+	m_mouseInput = GetMouseInput();
 
-}
+	m_preMouseArea.x = m_mouseArea.x;
+	m_preMouseArea.y = m_mouseArea.y;
+	GetMousePoint(&m_mouseArea.x, &m_mouseArea.y);
 
-MouseData::~MouseData()
-{
 
-}
-
-int MouseData::m_Mouse[3];
-int MouseData::MouseInput;
-
-void MouseData::Mouse_UpDate()
-{
-	MouseInput = GetMouseInput();    //マウスの押した状態取得
-	for (int i = 0; i < 3; i++)
+	for (int i = 0; i != 3; ++i)
 	{
-		if ((MouseInput & 1 << i) != 0)
+		// 押されていなかったら
+		if ((m_mouseInput & 1 << i)/* 左は1 / 右は2 / 真ん中は4 */ == 0)
 		{
-			m_Mouse[i]++;   //押されていたらカウントアップ
+			if (m_mouse[i] < 0)
+			{
+				m_mouse[i] = 0;
+			}
+			else if (m_mouse[i] > 0)
+			{
+				m_mouse[i] = -1;
+			}
 		}
+		// 押されていたら
 		else
 		{
-			m_Mouse[i] = 0; //押されてなかったら0
+			m_mouse[i]++;
 		}
 	}
 }
 
-int MouseData::GetClick(int MouseCode)
+
+
+/// ------------------------------------------------------------------------------------------------------------
+const int& MouseData::GetClick(const ECLICK& t_mouseCode)
 {
-	return m_Mouse[MouseCode];
+	return m_mouse[static_cast<int>(t_mouseCode)];
 }
 
-//////////////////////////////////////////////マウスホイール関連////////////////////////////////////////////////////
-MouseWheelData::MouseWheelData()
-{
 
+
+/// ------------------------------------------------------------------------------------------------------------
+const MouseData::MouseXY& MouseData::GetMouseArea()
+{
+	return m_mouseArea;
 }
 
-MouseWheelData::~MouseWheelData()
-{
 
+
+/// ------------------------------------------------------------------------------------------------------------
+const MouseData::MouseXY MouseData::GetMouseMoveValue()
+{
+	return { m_mouseArea.x - m_preMouseArea.x, m_mouseArea.y - m_preMouseArea.y };
 }
 
-int MouseWheelData::m_MouseWheel;
-int MouseWheelData::old_MouseWheel;
 
-void MouseWheelData::MouseWheel_Update()
+
+/// ------------------------------------------------------------------------------------------------------------
+
+int MouseWheelData::m_mouseWheel;
+int MouseWheelData::m_oldMouseWheel;
+
+
+
+/// ------------------------------------------------------------------------------------------------------------
+void MouseWheelData::UpDate()
 {
-	old_MouseWheel = m_MouseWheel;
-	if (old_MouseWheel - m_MouseWheel > 0)
+	if (m_oldMouseWheel == m_mouseWheel)
 	{
-		m_MouseWheel++;
-	}
-	else if (old_MouseWheel - m_MouseWheel < 0)
-	{
-		m_MouseWheel--;
+		if (m_mouseWheel != 0) m_mouseWheel = 0;
+		return;
 	}
 	else
 	{
-		m_MouseWheel = 0;
+		m_oldMouseWheel = m_mouseWheel;
+	}
+
+
+	if (m_oldMouseWheel - m_mouseWheel > 0)
+	{
+		m_mouseWheel++;
+	}
+	else if (m_oldMouseWheel - m_mouseWheel < 0)
+	{
+		m_mouseWheel--;
 	}
 }
 
-int MouseWheelData::GetMouseWheel(int MouseWheelCode)
+
+
+/// ------------------------------------------------------------------------------------------------------------
+const int& MouseWheelData::GetMouseWheel()
 {
-	return m_MouseWheel += MouseWheelCode;
+	return m_mouseWheel += GetMouseWheelRotVol();
 }
