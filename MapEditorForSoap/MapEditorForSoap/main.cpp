@@ -62,6 +62,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		// ドラッグアンドドロップが行われたとき
 		if (GetDragFileNum() > 0)
 		{
+			if (pproject != nullptr)
+			{
+				delete pproject;
+				pproject = nullptr;
+			}
 			char filePath[MAX_PATH];				// ファイルのパスを所持する仮置き変数
 
 			GetDragFilePath(filePath);				// ドラッグアンドドロップのパスを取得

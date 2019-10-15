@@ -195,6 +195,9 @@ DragProject::DragProject(std::string str)
 /// ---------------------------------------------------------------------------------------------------------------------
 DragProject::~DragProject()
 {
+	TextOutPut();
+
+
 	DeleteGraph(m_vChipDraw[0]);
 	DeleteGraph(m_vChipDraw[1]);
 	DeleteGraph(m_vChipDraw[2]);
