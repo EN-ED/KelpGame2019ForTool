@@ -2,6 +2,7 @@
 #include "InputMouse.hpp"
 #include "InputKey.hpp"
 #include "DxLib.h"
+#include "DragProject.hpp"
 
 
 // プログラムは WinMain から始まります
@@ -36,7 +37,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		return -1;			// エラーが起きたら直ちに終了
 	}
 
-
 	SetAlwaysRunFlag(TRUE);			// 裏でもアクティブにする
 	SetDrawScreen(DX_SCREEN_BACK);	// 背景描画
 	SetMouseDispFlag(TRUE);			// マウスカーソルを表示する
@@ -49,7 +49,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	MouseData::UpDate();
 
+	DragProject* pproject = nullptr;
 
+	bool flag = false;
 
 	// メインループ
 	while (!ScreenFlip() && !ProcessMessage() && !ClearDrawScreen() && !KeyData::IsCheckEnd())
@@ -57,13 +59,35 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		MouseData::UpDate();
 		KeyData::UpDate();
 
+		// ドラッグアンドドロップが行われたとき
+		if (GetDragFileNum() > 0)
+		{
+			char filePath[MAX_PATH];				// ファイルのパスを所持する仮置き変数
 
-		project.Draw();
-		project.Process();
+			GetDragFilePath(filePath);				// ドラッグアンドドロップのパスを取得
+
+			pproject = new DragProject(filePath);
+			flag = true;
+		}
+
+		if (flag)
+		{
+			pproject->Draw();
+			pproject->Process();
+		}
+		else
+		{
+			project.Draw();
+			project.Process();
+		}
 	}
 
 
 	// 後片付け
+	if (flag)
+	{
+		delete pproject;
+	}
 	InitGraph();
 	DxLib_End();
 

@@ -1,11 +1,9 @@
 #include "Project.hpp"
-#include "InputMouse.hpp"
-#include "InputKey.hpp"
-#include "DxLib.h"
 
-#include <random>
-#include <fstream>
-#include <sstream>
+
+
+/// ---------------------------------------------------------------------------------------------------------------------
+BlurScreen g_blurScreen;
 
 
 
@@ -27,10 +25,9 @@ void Project::TextOutPut()
 	}
 
 
-	saveFile << "なんか" << std::endl;
 	for (int i = 0; i != m_vChipAreaX.size(); ++i)
 	{
-		saveFile << m_vChipAreaX.at(i) << "," << m_vChipAreaY.at(i) << std::endl;
+		saveFile << m_vChipAreaX.at(i) << "," << m_vChipAreaY.at(i) << "," << m_vChipID.at(i) << std::endl;
 	}
 
 
@@ -43,61 +40,53 @@ void Project::TextOutPut()
 /// ---------------------------------------------------------------------------------------------------------------------
 void Project::GameDraw()
 {
-	// 背景
-	DrawGraph(m_scrollX, 0, m_backGroundDraw, true);
-	DrawGraph(m_scrollX + 1920, 0, m_backGroundDraw, true);
-
-	// 地面
-	DrawGraph(m_scrollX, 1080 - 128 /*全体高さ - 地面高さ*/, m_underGroundDraw, true);
-	DrawGraph(m_scrollX + 1920, 1080 - 128 /*全体高さ - 地面高さ*/, m_underGroundDraw, true);
-
-	// マップチップ
-	for (int i = 0; i != m_vChipAreaX.size(); ++i)
+	if (mp_character->GetIsSpeedUp())
 	{
-		DrawGraph(m_vChipAreaX.at(i) - m_areaX + 1920, m_vChipAreaY.at(i), m_vChipDraw, true);
-	}
-
-	// キャラクター
-	DrawGraph(284, 1080 - 128 - 192 /*全体高さ - 地面高さ - キャラクター高さ*/, m_charaDraw, true);
-}
-
-
-
-/// ---------------------------------------------------------------------------------------------------------------------
-void Project::GridDraw()
-{
-	if (m_is96DotGrid)
-	{
-		for (int i = m_scrollX; i <= 1920 - m_scrollX; i += 96)
+		if (m_isFirstSpeedUp)
 		{
-			DrawLine(i, 0, i, 1080, GetColor(0, 0, 50));
+			g_blurScreen.PreRenderBlurScreen();
+			mp_backGround->Draw();
+			mp_character->BlurDraw();
+			for (int i = 0; i != mp_garbage.size(); ++i)
+			{
+				mp_garbage[i]->Draw();
+			}
+			g_blurScreen.PostRenderBlurScreen();
+
+			for (int i = 0; i != mp_garbage.size(); ++i)
+			{
+				mp_garbage[i]->Draw();
+			}
+			mp_character->Draw();
 		}
-		for (int i = 0; i <= 1080; i += 96)
+		else
 		{
-			DrawLine(0, i, 1920, i, GetColor(0, 0, 50));
-		}
-	}
-	if (m_is64DotGrid)
-	{
-		for (int i = m_scrollX; i <= 1920 - m_scrollX; i += 64)
-		{
-			DrawLine(i, 0, i, 1080, GetColor(0, 50, 0));
-		}
-		for (int i = 0; i <= 1080; i += 64)
-		{
-			DrawLine(0, i, 1920, i, GetColor(0, 50, 0));
+			m_isFirstSpeedUp = true;
+			g_blurScreen.ReplayInit();
+			g_blurScreen.PreRenderBlurScreen();
+			for (int i = 0; i != mp_garbage.size(); ++i)
+			{
+				mp_garbage[i]->Draw();
+			}
+			mp_backGround->Draw();
+			mp_character->BlurDraw();
+			g_blurScreen.PostRenderBlurScreen();
+
+			for (int i = 0; i != mp_garbage.size(); ++i)
+			{
+				mp_garbage[i]->Draw();
+			}
+			mp_character->Draw();
 		}
 	}
-	if (m_is32DotGrid)
+	else
 	{
-		for (int i = m_scrollX; i <= 1920 - m_scrollX; i += 32)
+		mp_backGround->Draw();
+		for (int i = 0; i != mp_garbage.size(); ++i)
 		{
-			DrawLine(i, 0, i, 1080, GetColor(50, 0, 0));
+			mp_garbage[i]->Draw();
 		}
-		for (int i = 0; i <= 1080; i += 32)
-		{
-			DrawLine(0, i, 1920, i, GetColor(50, 0, 0));
-		}
+		mp_character->Draw();
 	}
 }
 
@@ -107,82 +96,10 @@ void Project::GridDraw()
 void Project::MouseDraw()
 {
 	// チップ
-	DrawGraph(MouseData::GetMouseArea().x, MouseData::GetMouseArea().y, m_vChipDraw, true);
+	DrawGraph(MouseData::GetMouseArea().x, MouseData::GetMouseArea().y, m_vChipDraw[m_nowSelectChip], true);
 
 	// マウス
 	DrawFormatString(MouseData::GetMouseArea().x, MouseData::GetMouseArea().y, GetColor(0, 0, 0), "%d x %d", m_mouseAreaX, MouseData::GetMouseArea().y);
-}
-
-
-
-/// ---------------------------------------------------------------------------------------------------------------------
-void Project::SpeedManageDraw()
-{
-	DrawBox(60, 1080 - 54, 1920 - 60, 1080 - 74, GetColor(255, 255, 255), true);
-
-	DrawBox((m_scrollSpeed * 10) - 10 + 60, 1080 - 48, (m_scrollSpeed * 10) + 10 + 60, 1080 - 82, GetColor(125, 0, 0), true);
-
-	DrawBox(19, 1080 - 111, 100, 1080 - 90, GetColor(0, 0, 0), true);
-
-	DrawFormatString(20, 1080 - 110, GetColor(255, 255, 255), "%d", m_scrollSpeed);
-}
-
-
-
-/// ---------------------------------------------------------------------------------------------------------------------
-void Project::SideScrollProcess()
-{
-	if (KeyData::Get(KEY_INPUT_Z) == 1)
-	{
-		if (++m_scrollSpeed >= 1920) m_scrollSpeed = 1919;
-	}
-	if (KeyData::Get(KEY_INPUT_X) == 1 && m_scrollSpeed != 0)
-	{
-		m_scrollSpeed--;
-	}
-	if (KeyData::Get(KEY_INPUT_R) == 1)
-	{
-		m_areaX = 1920;
-		m_scrollX = 0;
-		m_scrollSpeed = 0;
-	}
-	if (KeyData::Get(KEY_INPUT_RIGHT) >= 1)
-	{
-		m_areaX += m_scrollSpeed;
-		m_scrollX -= m_scrollSpeed;
-	}
-	if (KeyData::Get(KEY_INPUT_LEFT) >= 1 && m_areaX > 1920)
-	{
-		m_areaX -= m_scrollSpeed;
-		m_scrollX += m_scrollSpeed;
-	}
-	if (m_scrollX <= -1920)
-	{
-		m_scrollX = 0;
-	}
-	if (m_scrollX > 0)
-	{
-		m_scrollX = -1920;
-	}
-}
-
-
-
-/// ---------------------------------------------------------------------------------------------------------------------
-void Project::GridProcess()
-{
-	if (KeyData::Get(KEY_INPUT_V) == 1)
-	{
-		m_is32DotGrid = !m_is32DotGrid;
-	}
-	if (KeyData::Get(KEY_INPUT_B) == 1)
-	{
-		m_is64DotGrid = !m_is64DotGrid;
-	}
-	if (KeyData::Get(KEY_INPUT_N) == 1)
-	{
-		m_is96DotGrid = !m_is96DotGrid;
-	}
 }
 
 
@@ -197,6 +114,8 @@ void Project::ChipProcess()
 		{
 			m_vChipAreaX.push_back(m_mouseAreaX);
 			m_vChipAreaY.push_back(MouseData::GetMouseArea().y);
+			m_vChipID.push_back(m_nowSelectChip);
+			mp_garbage.push_back(new Garbage(MouseData::GetMouseArea().x, MouseData::GetMouseArea().y, static_cast<Garbage::EDrawID>(m_nowSelectChip)));
 		}
 	}
 
@@ -206,16 +125,22 @@ void Project::ChipProcess()
 	{
 		for (int i = 0; i != m_vChipAreaX.size(); ++i)
 		{
-			int graphX, graphY;
-			GetGraphSize(m_vChipDraw, &graphX, &graphY);
-			if (m_mouseAreaX > m_vChipAreaX.at(i) && m_mouseAreaX < m_vChipAreaX.at(i) + graphX
-				&& MouseData::GetMouseArea().y>m_vChipAreaY.at(i) && MouseData::GetMouseArea().y < m_vChipAreaY.at(i) + graphY)
+			if (MouseData::GetMouseArea().x > mp_garbage[i]->GetX() && MouseData::GetMouseArea().x < mp_garbage[i]->GetX() + 256
+				&& MouseData::GetMouseArea().y > mp_garbage[i]->GetY() && MouseData::GetMouseArea().y < mp_garbage[i]->GetY() + 256)
 			{
 				m_vChipAreaX.erase(m_vChipAreaX.begin() + i);
 				m_vChipAreaY.erase(m_vChipAreaY.begin() + i);
+				delete mp_garbage[i];
+				mp_garbage.erase(mp_garbage.begin() + i);
 				break;
 			}
 		}
+	}
+
+
+	if (MouseData::GetClick(MouseData::ECLICK::CENTER) == 1)
+	{
+		if (++m_nowSelectChip >= 3) m_nowSelectChip = 0;
 	}
 }
 
@@ -224,34 +149,42 @@ void Project::ChipProcess()
 /// ---------------------------------------------------------------------------------------------------------------------
 Project::Project()
 {
-	// 背景
-	m_backGroundDraw = LoadGraph("media\\background.png");
-	
-	m_scrollX = 0;
-	m_scrollSpeed = 0;
-
-	m_is32DotGrid = false;
-	m_is64DotGrid = false;
-	m_is96DotGrid = false;
-
-
-	m_vChipDraw = LoadGraph("media\\garbage.png");
-
-	m_areaX = 1920;
-
 	std::vector<int>().swap(m_vChipAreaX);
 	std::vector<int>().swap(m_vChipAreaY);
-
-	// キャラクター
-	m_charaDraw = LoadGraph("media\\player.png");
+	std::vector<int>().swap(m_vChipID);
 
 
-	// 地面
-	m_underGroundDraw = LoadGraph("media\\underground.png");
 
+
+	mp_backGround = nullptr;
+	mp_backGround = new BackGround();
+
+	mp_character = nullptr;
+	mp_character = new Character();
+
+	g_blurScreen.Init(200, 6, -2, 0, 0);
+
+	m_isFirstSpeedUp = false;
+
+
+	std::vector<Garbage*>().swap(mp_garbage);
+
+	m_nowSelectChip = 0;
+	m_vChipDraw[0] = LoadGraph("media\\item\\Doro.png");
+	m_vChipDraw[1] = LoadGraph("media\\item\\mizutamari.png");
+	m_vChipDraw[2] = LoadGraph("media\\item\\Sekiyu.png");
+
+	m_gameStop = false;
 
 	// マウス
-	m_mouseAreaX = MouseData::GetMouseArea().x + m_areaX - 1920;
+	m_mouseAreaX = MouseData::GetMouseArea().x + mp_backGround->GetAllAreaX();
+
+	m_scroll = 0;
+
+	m_6speedGame = false;
+	m_8speedGame = false;
+	m_4speedGame = false;
+	m_2speedGame = false;
 }
 
 
@@ -259,12 +192,24 @@ Project::Project()
 /// ---------------------------------------------------------------------------------------------------------------------
 Project::~Project()
 {
-	DeleteGraph(m_backGroundDraw);
-	DeleteGraph(m_charaDraw);
-	DeleteGraph(m_underGroundDraw);
-	DeleteGraph(m_vChipDraw);
+	DeleteGraph(m_vChipDraw[0]);
+	DeleteGraph(m_vChipDraw[1]);
+	DeleteGraph(m_vChipDraw[2]);
+
 	std::vector<int>().swap(m_vChipAreaX);
 	std::vector<int>().swap(m_vChipAreaY);
+	std::vector<int>().swap(m_vChipID);
+
+
+	for (int i = 0; i != mp_garbage.size(); ++i)
+	{
+		if (mp_garbage[i] != nullptr) delete mp_garbage[i];
+	}
+	if (mp_character != nullptr) delete mp_character;
+	if (mp_backGround != nullptr) delete mp_backGround;
+
+	g_blurScreen.Release();
+	g_blurScreen.~BlurScreen();
 }
 
 
@@ -274,11 +219,6 @@ void Project::Draw()
 {
 	// ゲーム
 	GameDraw();
-
-	SpeedManageDraw();
-
-	// グリッド
-	GridDraw();
 
 	// マウス
 	MouseDraw();
@@ -290,7 +230,7 @@ void Project::Draw()
 void Project::Process()
 {
 	// マウスの位置を取得する
-	m_mouseAreaX = MouseData::GetMouseArea().x + m_areaX - 1920;
+	m_mouseAreaX = MouseData::GetMouseArea().x + mp_backGround->GetAllAreaX();
 
 
 	// セーブする
@@ -300,14 +240,308 @@ void Project::Process()
 	}
 
 
-	// スクロール
-	SideScrollProcess();
+	if (KeyData::Get(KEY_INPUT_RIGHT) > 1)
+	{
+		mp_backGround->SetMoveX(10, true);
+		for (int i = 0; i != mp_garbage.size(); ++i)
+		{
+			mp_garbage[i]->SetMoveX(10, true);
+		}
+	}
+	if (KeyData::Get(KEY_INPUT_LEFT) > 1)
+	{
+		if (mp_backGround->GetArea() > 0)
+		{
+			mp_backGround->SetMoveX(10, false);
+			mp_backGround->Process();
+			for (int i = 0; i != mp_garbage.size(); ++i)
+			{
+				mp_garbage[i]->SetMoveX(10, false);
+			}
+		}
+	}
+
+	if (KeyData::Get(KEY_INPUT_R) == 1)
+	{
+		mp_character->SetReset();
+		mp_backGround->SetReset();
+		for (int i = 0; i != mp_garbage.size(); ++i)
+		{
+			mp_garbage[i]->SetReset(m_vChipAreaX[i], m_vChipAreaY[i]);
+		}
+		m_8speedGame = false;
+		m_6speedGame = false;
+		m_4speedGame = false;
+		m_2speedGame = false;
+		m_gameStop = false;
+	}
+
+	if (KeyData::Get(KEY_INPUT_S) == 1 && !m_gameStop && !m_6speedGame && !m_4speedGame && !m_2speedGame)
+	{
+		if (!m_8speedGame)
+		{
+			mp_character->SetReset();
+			mp_backGround->SetReset();
+			for (int i = 0; i != mp_garbage.size(); ++i)
+			{
+				mp_garbage[i]->SetReset(m_vChipAreaX[i], m_vChipAreaY[i]);
+			}
+			m_8speedGame = true;
+		}
+		else
+		{
+			m_8speedGame = false;
+		}
+	}
+
+	if (KeyData::Get(KEY_INPUT_D) == 1 && !m_gameStop && !m_8speedGame && !m_4speedGame && !m_2speedGame)
+	{
+		if (!m_6speedGame)
+		{
+			mp_character->SetReset();
+			mp_backGround->SetReset();
+			for (int i = 0; i != mp_garbage.size(); ++i)
+			{
+				mp_garbage[i]->SetReset(m_vChipAreaX[i], m_vChipAreaY[i]);
+			}
+			m_6speedGame = true;
+		}
+		else
+		{
+			m_6speedGame = false;
+		}
+	}
+
+	if (KeyData::Get(KEY_INPUT_F) == 1 && !m_gameStop && !m_8speedGame && !m_6speedGame && !m_2speedGame)
+	{
+		if (!m_4speedGame)
+		{
+			mp_character->SetReset();
+			mp_backGround->SetReset();
+			for (int i = 0; i != mp_garbage.size(); ++i)
+			{
+				mp_garbage[i]->SetReset(m_vChipAreaX[i], m_vChipAreaY[i]);
+			}
+			m_4speedGame = true;
+		}
+		else
+		{
+			m_4speedGame = false;
+		}
+	}
+
+	if (KeyData::Get(KEY_INPUT_G) == 1 && !m_gameStop && !m_8speedGame && !m_4speedGame && !m_6speedGame)
+	{
+		if (!m_2speedGame)
+		{
+			mp_character->SetReset();
+			mp_backGround->SetReset();
+			for (int i = 0; i != mp_garbage.size(); ++i)
+			{
+				mp_garbage[i]->SetReset(m_vChipAreaX[i], m_vChipAreaY[i]);
+			}
+			m_2speedGame = true;
+		}
+		else
+		{
+			m_2speedGame = false;
+		}
+	}
 
 
-	// ドットグリッド
-	GridProcess();
+	if (KeyData::Get(KEY_INPUT_NUMPADENTER) == 1 && !m_8speedGame && !m_6speedGame && !m_4speedGame && !m_2speedGame)
+	{
+		m_gameStop = !m_gameStop;
+	}
 
 
-	// チップ
-	ChipProcess();
+	if (m_gameStop)
+	{
+		// チップ
+		ChipProcess();
+
+
+		mp_backGround->Process();
+
+
+		mp_character->Process();
+
+
+		mp_backGround->SetSpeed(mp_character->GetSpeed());
+
+
+		for (int i = 0; i != mp_garbage.size(); ++i)
+		{
+			if (mp_garbage[i]->GetX() + 256 < 0) continue;
+			if (mp_character->GetIsSpeedUp())
+			{
+				mp_garbage[i]->Process(static_cast<int>(mp_character->GetSpeed()));
+				continue;
+			}
+			else
+			{
+				mp_garbage[i]->Process(static_cast<int>(mp_character->GetSpeed()));
+			}
+			if (/*石鹸の右端 が 障害物の左端 より大きい*/
+				mp_character->GetAreaX() + mp_character->GetSize() >= mp_garbage[i]->GetX()
+				/*石鹸の左端 が 障害物の左端と障害物の速度 より小さい*/
+				&& mp_character->GetAreaX() <= mp_garbage[i]->GetX() + static_cast<int>(mp_character->GetSpeed() * 0.25f)
+				/*石鹸の下端 が 障害物の上端 より大きい*/
+				&& mp_character->GetAreaY() + mp_character->GetSize() >= mp_garbage[i]->GetY()
+				/*石鹸の上端 が 障害物の下端 より小さい*/
+				&& mp_character->GetAreaY() <= mp_garbage[i]->GetY() + 256)
+			{
+				mp_character->HitGarbageNow(i, static_cast<Character::EHitGarbageID>(mp_garbage[i]->GetID()));
+			}
+		}
+	}
+	else if (m_8speedGame)
+	{
+		mp_backGround->Process();
+
+
+		mp_character->Process();
+
+
+		mp_backGround->SetSpeed(mp_character->GetSpeed());
+
+
+		for (int i = 0; i != mp_garbage.size(); ++i)
+		{
+			if (mp_garbage[i]->GetX() + 256 < 0) continue;
+			if (mp_character->GetIsSpeedUp())
+			{
+				mp_garbage[i]->Process(static_cast<int>(mp_character->GetSpeed()));
+				continue;
+			}
+			else
+			{
+				mp_garbage[i]->Process(static_cast<int>(mp_character->GetSpeed() * 0.8f));
+			}
+			if (/*石鹸の右端 が 障害物の左端 より大きい*/
+				mp_character->GetAreaX() + mp_character->GetSize() >= mp_garbage[i]->GetX()
+				/*石鹸の左端 が 障害物の左端と障害物の速度 より小さい*/
+				&& mp_character->GetAreaX() <= mp_garbage[i]->GetX() + static_cast<int>(mp_character->GetSpeed() * 0.25f)
+				/*石鹸の下端 が 障害物の上端 より大きい*/
+				&& mp_character->GetAreaY() + mp_character->GetSize() >= mp_garbage[i]->GetY()
+				/*石鹸の上端 が 障害物の下端 より小さい*/
+				&& mp_character->GetAreaY() <= mp_garbage[i]->GetY() + 256)
+			{
+				mp_character->HitGarbageNow(i, static_cast<Character::EHitGarbageID>(mp_garbage[i]->GetID()));
+			}
+		}
+	}
+	else if (m_6speedGame)
+	{
+		mp_backGround->Process();
+
+
+		mp_character->Process();
+
+
+		mp_backGround->SetSpeed(mp_character->GetSpeed());
+
+
+		for (int i = 0; i != mp_garbage.size(); ++i)
+		{
+			if (mp_garbage[i]->GetX() + 256 < 0) continue;
+			if (mp_character->GetIsSpeedUp())
+			{
+				mp_garbage[i]->Process(static_cast<int>(mp_character->GetSpeed()));
+				continue;
+			}
+			else
+			{
+				mp_garbage[i]->Process(static_cast<int>(mp_character->GetSpeed() * 0.6f));
+			}
+			if (/*石鹸の右端 が 障害物の左端 より大きい*/
+				mp_character->GetAreaX() + mp_character->GetSize() >= mp_garbage[i]->GetX()
+				/*石鹸の左端 が 障害物の左端と障害物の速度 より小さい*/
+				&& mp_character->GetAreaX() <= mp_garbage[i]->GetX() + static_cast<int>(mp_character->GetSpeed() * 0.25f)
+				/*石鹸の下端 が 障害物の上端 より大きい*/
+				&& mp_character->GetAreaY() + mp_character->GetSize() >= mp_garbage[i]->GetY()
+				/*石鹸の上端 が 障害物の下端 より小さい*/
+				&& mp_character->GetAreaY() <= mp_garbage[i]->GetY() + 256)
+			{
+				mp_character->HitGarbageNow(i, static_cast<Character::EHitGarbageID>(mp_garbage[i]->GetID()));
+			}
+		}
+	}
+	else if (m_4speedGame)
+	{
+		mp_backGround->Process();
+
+
+		mp_character->Process();
+
+
+		mp_backGround->SetSpeed(mp_character->GetSpeed());
+
+
+		for (int i = 0; i != mp_garbage.size(); ++i)
+		{
+			if (mp_garbage[i]->GetX() + 256 < 0) continue;
+			if (mp_character->GetIsSpeedUp())
+			{
+				mp_garbage[i]->Process(static_cast<int>(mp_character->GetSpeed()));
+				continue;
+			}
+			else
+			{
+				mp_garbage[i]->Process(static_cast<int>(mp_character->GetSpeed() * 0.4f));
+			}
+			if (/*石鹸の右端 が 障害物の左端 より大きい*/
+				mp_character->GetAreaX() + mp_character->GetSize() >= mp_garbage[i]->GetX()
+				/*石鹸の左端 が 障害物の左端と障害物の速度 より小さい*/
+				&& mp_character->GetAreaX() <= mp_garbage[i]->GetX() + static_cast<int>(mp_character->GetSpeed() * 0.25f)
+				/*石鹸の下端 が 障害物の上端 より大きい*/
+				&& mp_character->GetAreaY() + mp_character->GetSize() >= mp_garbage[i]->GetY()
+				/*石鹸の上端 が 障害物の下端 より小さい*/
+				&& mp_character->GetAreaY() <= mp_garbage[i]->GetY() + 256)
+			{
+				mp_character->HitGarbageNow(i, static_cast<Character::EHitGarbageID>(mp_garbage[i]->GetID()));
+			}
+		}
+	}
+	else if (m_2speedGame)
+	{
+		mp_backGround->Process();
+
+
+		mp_character->Process();
+
+
+		mp_backGround->SetSpeed(mp_character->GetSpeed());
+
+
+		for (int i = 0; i != mp_garbage.size(); ++i)
+		{
+			if (mp_garbage[i]->GetX() + 256 < 0) continue;
+			if (mp_character->GetIsSpeedUp())
+			{
+				mp_garbage[i]->Process(static_cast<int>(mp_character->GetSpeed()));
+				continue;
+			}
+			else
+			{
+				mp_garbage[i]->Process(static_cast<int>(mp_character->GetSpeed() * 0.2f));
+			}
+			if (/*石鹸の右端 が 障害物の左端 より大きい*/
+				mp_character->GetAreaX() + mp_character->GetSize() >= mp_garbage[i]->GetX()
+				/*石鹸の左端 が 障害物の左端と障害物の速度 より小さい*/
+				&& mp_character->GetAreaX() <= mp_garbage[i]->GetX() + static_cast<int>(mp_character->GetSpeed() * 0.25f)
+				/*石鹸の下端 が 障害物の上端 より大きい*/
+				&& mp_character->GetAreaY() + mp_character->GetSize() >= mp_garbage[i]->GetY()
+				/*石鹸の上端 が 障害物の下端 より小さい*/
+				&& mp_character->GetAreaY() <= mp_garbage[i]->GetY() + 256)
+			{
+				mp_character->HitGarbageNow(i, static_cast<Character::EHitGarbageID>(mp_garbage[i]->GetID()));
+			}
+		}
+	}
+	else
+	{
+		// チップ
+		ChipProcess();
+	}
 }

@@ -1,6 +1,7 @@
 #pragma once
 #ifndef _INPUTKEY_HPP
 #define _INPUTKEY_HPP
+#include "DxLib.h"
 
 
 

@@ -1,6 +1,7 @@
 #pragma once
 #ifndef _INPUTMOUSE_HPP
 #define _INPUTMOUSE_HPP
+#include "DxLib.h"
 
 
 
