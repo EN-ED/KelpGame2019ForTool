@@ -115,7 +115,22 @@ void DragProject::ChipProcess()
 			m_vChipAreaX.push_back(m_mouseAreaX);
 			m_vChipAreaY.push_back(MouseData::GetMouseArea().y);
 			m_vChipID.push_back(m_nowSelectChip);
-			mp_garbage.push_back(new Garbage(MouseData::GetMouseArea().x, MouseData::GetMouseArea().y, static_cast<Garbage::EDrawID>(m_nowSelectChip)));
+
+			switch (m_nowSelectChip)
+			{
+			case 0:
+				mp_garbage.push_back(new Garbage(MouseData::GetMouseArea().x, MouseData::GetMouseArea().y, Garbage::EDrawID::doro));
+				break;
+			case 1:
+				mp_garbage.push_back(new Garbage(MouseData::GetMouseArea().x, MouseData::GetMouseArea().y, Garbage::EDrawID::mizutamari));
+				break;
+			case 2:
+				mp_garbage.push_back(new Garbage(MouseData::GetMouseArea().x, MouseData::GetMouseArea().y, Garbage::EDrawID::sekiyu));
+				break;
+			default:
+				break;
+			}
+
 		}
 	}
 
@@ -619,7 +634,7 @@ void DragProject::Load(std::string strr)
 		count++;
 	}
 
-	for (int i = 0, n = mapdata.size() - 1; i != n; ++i)
+	for (int i = 0, n = mapdata.size(); i != n; ++i)
 	{
 		m_vChipAreaX.push_back(std::stoi(mapdata[i][0].c_str()));
 		m_vChipAreaY.push_back(std::stoi(mapdata[i][1].c_str()));
@@ -628,7 +643,20 @@ void DragProject::Load(std::string strr)
 
 	for (int i = 0, n = m_vChipAreaX.size(); i != n; ++i)
 	{
-		mp_garbage.push_back(new Garbage(m_vChipAreaX.at(i), m_vChipAreaY.at(i), static_cast<Garbage::EDrawID>(m_vChipID.at(i))));
+		switch (m_vChipID.at(i))
+		{
+		case 0:
+			mp_garbage.push_back(new Garbage(m_vChipAreaX.at(i), m_vChipAreaY.at(i), Garbage::EDrawID::doro));
+			break;
+		case 1:
+			mp_garbage.push_back(new Garbage(m_vChipAreaX.at(i), m_vChipAreaY.at(i), Garbage::EDrawID::mizutamari));
+			break;
+		case 2:
+			mp_garbage.push_back(new Garbage(m_vChipAreaX.at(i), m_vChipAreaY.at(i), Garbage::EDrawID::sekiyu));
+			break;
+		default:
+			break;
+		}
 	}
 	//mp_garbage.push_back(new Garbage(1920, 0, Garbage::EDrawID::doro));
 }
