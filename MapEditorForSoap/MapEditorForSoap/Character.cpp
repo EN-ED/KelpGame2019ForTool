@@ -60,13 +60,15 @@ void Character::PositionProcess()
 /// ---------------------------------------------------------------------------------------------------------------------------------------------------------
 void Character::HitGarbageProcess()
 {
-	if (m_preHitGarbageID != m_hitGarbageID && m_isHitGarbage && !m_isNowSpeedUp && m_nowState == ESTATE::normal && !m_isDamageHit)
+	if (m_preHitGarbageID != m_hitGarbageID && m_isHitGarbage && !m_isNowSpeedUp && m_nowState == ESTATE::normal && !m_isDamageHit && !m_nowHeal)
 	{
 		m_preHitGarbageID = m_hitGarbageID;
 		m_isHitGarbage = false;
 		switch (m_hitGarbageObjectID)
 		{
 		case EHitGarbageID::doro:
+			m_isDamageHit = true;
+			m_nowState = ESTATE::doroDamageHit;
 			m_smallSpeed += 0.05f;
 			break;
 
@@ -78,8 +80,8 @@ void Character::HitGarbageProcess()
 			break;
 
 		case EHitGarbageID::sekiyu:
-			m_smallSpeed -= 0.15f;
-			if (m_smallSpeed > 0.0f) m_smallSpeed = 0.0f;
+			m_nowHeal = true;
+			m_nowState = ESTATE::heal;
 			break;
 
 		default:
@@ -92,10 +94,25 @@ void Character::HitGarbageProcess()
 	if (m_isDamageHit)
 	{
 		// ダメージカウントが最大になったら
-		if (++m_damageCount > m_damageMaxCount&& m_isGroundFlag)
+		if (++m_damageCount > m_damageMaxCount && m_isGroundFlag)
 		{
 			m_damageCount = 0;
 			m_isDamageHit = false;
+			m_nowState = ESTATE::normal;
+		}
+	}
+
+
+	// 灯油に当たったら
+	if (m_nowHeal)
+	{
+		m_smallSpeed -= 0.01f;
+		if (m_smallSpeed < 0.0f) m_smallSpeed = 0.0f;
+		// ダメージカウントが最大になったら
+		if (++m_damageCount > static_cast<int>(m_damageMaxCount * 0.5) && m_isGroundFlag)
+		{
+			m_damageCount = 0;
+			m_nowHeal = false;
 			m_nowState = ESTATE::normal;
 		}
 	}
@@ -358,6 +375,7 @@ Character::Character()
 	mD_speedComma = LoadGraph("media\\num\\comma.png");
 
 	m_allNowAreaX = 0;
+	m_nowHeal = false;
 }
 
 
@@ -422,33 +440,40 @@ void Character::Draw()
 	DrawRotaGraph(m_playerX, m_playerY + static_cast<int>(m_playerSize * 0.5) + static_cast<int>(m_playerSize * 0.5 * m_smallSpeed)
 		, 1.0 - static_cast<double>(m_smallSpeed), 0, mD_playerArray[static_cast<int>(m_playerDrawAnimCount / m_playerDrawAnimSpeed)], true);
 
-	/*switch (m_nowState)
+	switch (m_nowState)
 	{
 	case ESTATE::normal:
 		if (m_speedUpChargeCount == m_speedUpChargeMax && !m_isJumpFlag && !m_isDamageHit)
 		{
-			DrawFormatString(980, 200, GetColor(0, 255, 255), "通常の加速できる石鹸君");
+			DrawFormatString(980, 200, GetColor(0, 255, 255), "通常の加速できる");
 		}
 		else
 		{
-			DrawFormatString(980, 200, GetColor(255, 255, 255), "通常の石鹸君");
+			DrawFormatString(980, 200, GetColor(255, 255, 255), "通常");
 		}
 		break;
 	case ESTATE::damageHit:
-		DrawFormatString(980, 200, GetColor(255, 0, 0), "ダメージ中の石鹸君");
+		DrawFormatString(980, 200, GetColor(255, 0, 0), "水によるダメージ中");
 		break;
 	case ESTATE::speedDown:
-		DrawFormatString(980, 200, GetColor(255, 255, 0), "急加速から戻り中の石鹸君");
+		DrawFormatString(980, 200, GetColor(255, 255, 0), "急加速から戻り中");
 		break;
 	case ESTATE::speedMAX:
-		DrawFormatString(980, 200, GetColor(255, 255, 0), "急加速最大の石鹸君");
+		DrawFormatString(980, 200, GetColor(255, 255, 0), "急加速最大");
 		break;
 	case ESTATE::speedUp:
-		DrawFormatString(980, 200, GetColor(255, 255, 0), "急加速中の石鹸君");
+		DrawFormatString(980, 200, GetColor(255, 255, 0), "急加速中");
 		break;
+	case ESTATE::doroDamageHit:
+		DrawFormatString(980, 200, GetColor(255, 0, 125), "泥によるダメージ中");
+		break;
+	case ESTATE::heal:
+		DrawFormatString(980, 200, GetColor(0, 255, 0), "灯油による回復中");
+		break;
+
 	default:
 		break;
-	}*/
+	}
 	//printfDx("%d\n", static_cast<int>(m_playerSize * static_cast<float>(m_speedUpChargeCount) / m_speedUpChargeMax));
 }
 
@@ -588,4 +613,15 @@ const int& Character::GetAreaY() const
 const int Character::GetSize() const
 {
 	return static_cast<int>(192 * (1.0 - static_cast<double>(m_smallSpeed)));
+}
+
+
+const bool Character::GetNowDamage() const
+{
+	return m_isDamageHit;
+}
+
+const bool Character::GetNowHeal() const
+{
+	return m_nowHeal;
 }

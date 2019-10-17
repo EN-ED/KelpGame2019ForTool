@@ -388,15 +388,22 @@ void DragProject::Process()
 			{
 				mp_garbage[i]->Process(static_cast<int>(mp_character->GetSpeed()));
 			}
-			if (/*石鹸の右端 が 障害物の左端 より大きい*/
-				mp_character->GetAreaX() + mp_character->GetSize() >= mp_garbage[i]->GetX()
+
+
+			// 既に石鹸君に対して障害物が当たっているフレーム中だったら
+			if (mp_character->GetNowDamage() || mp_character->GetNowHeal()) continue;
+
+			// 当たり判定
+			if (/*石鹸の右端より1/4減らす が 障害物の左端 より大きい*/
+				mp_character->GetAreaX() + static_cast<int>(mp_character->GetSize() * 0.75) >= mp_garbage[i]->GetX()
 				/*石鹸の左端 が 障害物の左端と障害物の速度 より小さい*/
-				&& mp_character->GetAreaX() <= mp_garbage[i]->GetX() + static_cast<int>(mp_character->GetSpeed() * 0.25f)
+				&& mp_character->GetAreaX() + static_cast<int>(mp_character->GetSize() * 0.25) <= mp_garbage[i]->GetX() + 256
 				/*石鹸の下端 が 障害物の上端 より大きい*/
-				&& mp_character->GetAreaY() + mp_character->GetSize() >= mp_garbage[i]->GetY()
+				&& mp_character->GetAreaY() + static_cast<int>(mp_character->GetSize() * 0.75) >= mp_garbage[i]->GetY()
 				/*石鹸の上端 が 障害物の下端 より小さい*/
-				&& mp_character->GetAreaY() <= mp_garbage[i]->GetY() + 256)
+				&& mp_character->GetAreaY() + static_cast<int>(mp_character->GetSize() * 0.25) <= mp_garbage[i]->GetY() + 256)
 			{
+
 				mp_character->HitGarbageNow(i, static_cast<Character::EHitGarbageID>(mp_garbage[i]->GetID()));
 			}
 		}
@@ -424,15 +431,22 @@ void DragProject::Process()
 			{
 				mp_garbage[i]->Process(static_cast<int>(mp_character->GetSpeed() * 0.8f));
 			}
-			if (/*石鹸の右端 が 障害物の左端 より大きい*/
-				mp_character->GetAreaX() + mp_character->GetSize() >= mp_garbage[i]->GetX()
+
+
+			// 既に石鹸君に対して障害物が当たっているフレーム中だったら
+			if (mp_character->GetNowDamage() || mp_character->GetNowHeal()) continue;
+
+			// 当たり判定
+			if (/*石鹸の右端より1/4減らす が 障害物の左端 より大きい*/
+				mp_character->GetAreaX() + static_cast<int>(mp_character->GetSize() * 0.75) >= mp_garbage[i]->GetX()
 				/*石鹸の左端 が 障害物の左端と障害物の速度 より小さい*/
-				&& mp_character->GetAreaX() <= mp_garbage[i]->GetX() + static_cast<int>(mp_character->GetSpeed() * 0.25f)
+				&& mp_character->GetAreaX() + static_cast<int>(mp_character->GetSize() * 0.25) <= mp_garbage[i]->GetX() + 256
 				/*石鹸の下端 が 障害物の上端 より大きい*/
-				&& mp_character->GetAreaY() + mp_character->GetSize() >= mp_garbage[i]->GetY()
+				&& mp_character->GetAreaY() + static_cast<int>(mp_character->GetSize() * 0.75) >= mp_garbage[i]->GetY()
 				/*石鹸の上端 が 障害物の下端 より小さい*/
-				&& mp_character->GetAreaY() <= mp_garbage[i]->GetY() + 256)
+				&& mp_character->GetAreaY() + static_cast<int>(mp_character->GetSize() * 0.25) <= mp_garbage[i]->GetY() + 256)
 			{
+
 				mp_character->HitGarbageNow(i, static_cast<Character::EHitGarbageID>(mp_garbage[i]->GetID()));
 			}
 		}
@@ -460,15 +474,22 @@ void DragProject::Process()
 			{
 				mp_garbage[i]->Process(static_cast<int>(mp_character->GetSpeed() * 0.6f));
 			}
-			if (/*石鹸の右端 が 障害物の左端 より大きい*/
-				mp_character->GetAreaX() + mp_character->GetSize() >= mp_garbage[i]->GetX()
+
+
+			// 既に石鹸君に対して障害物が当たっているフレーム中だったら
+			if (mp_character->GetNowDamage() || mp_character->GetNowHeal()) continue;
+
+			// 当たり判定
+			if (/*石鹸の右端より1/4減らす が 障害物の左端 より大きい*/
+				mp_character->GetAreaX() + static_cast<int>(mp_character->GetSize() * 0.75) >= mp_garbage[i]->GetX()
 				/*石鹸の左端 が 障害物の左端と障害物の速度 より小さい*/
-				&& mp_character->GetAreaX() <= mp_garbage[i]->GetX() + static_cast<int>(mp_character->GetSpeed() * 0.25f)
+				&& mp_character->GetAreaX() + static_cast<int>(mp_character->GetSize() * 0.25) <= mp_garbage[i]->GetX() + 256
 				/*石鹸の下端 が 障害物の上端 より大きい*/
-				&& mp_character->GetAreaY() + mp_character->GetSize() >= mp_garbage[i]->GetY()
+				&& mp_character->GetAreaY() + static_cast<int>(mp_character->GetSize() * 0.75) >= mp_garbage[i]->GetY()
 				/*石鹸の上端 が 障害物の下端 より小さい*/
-				&& mp_character->GetAreaY() <= mp_garbage[i]->GetY() + 256)
+				&& mp_character->GetAreaY() + static_cast<int>(mp_character->GetSize() * 0.25) <= mp_garbage[i]->GetY() + 256)
 			{
+
 				mp_character->HitGarbageNow(i, static_cast<Character::EHitGarbageID>(mp_garbage[i]->GetID()));
 			}
 		}
@@ -496,15 +517,22 @@ void DragProject::Process()
 			{
 				mp_garbage[i]->Process(static_cast<int>(mp_character->GetSpeed() * 0.4f));
 			}
-			if (/*石鹸の右端 が 障害物の左端 より大きい*/
-				mp_character->GetAreaX() + mp_character->GetSize() >= mp_garbage[i]->GetX()
+
+
+			// 既に石鹸君に対して障害物が当たっているフレーム中だったら
+			if (mp_character->GetNowDamage() || mp_character->GetNowHeal()) continue;
+
+			// 当たり判定
+			if (/*石鹸の右端より1/4減らす が 障害物の左端 より大きい*/
+				mp_character->GetAreaX() + static_cast<int>(mp_character->GetSize() * 0.75) >= mp_garbage[i]->GetX()
 				/*石鹸の左端 が 障害物の左端と障害物の速度 より小さい*/
-				&& mp_character->GetAreaX() <= mp_garbage[i]->GetX() + static_cast<int>(mp_character->GetSpeed() * 0.25f)
+				&& mp_character->GetAreaX() + static_cast<int>(mp_character->GetSize() * 0.25) <= mp_garbage[i]->GetX() + 256
 				/*石鹸の下端 が 障害物の上端 より大きい*/
-				&& mp_character->GetAreaY() + mp_character->GetSize() >= mp_garbage[i]->GetY()
+				&& mp_character->GetAreaY() + static_cast<int>(mp_character->GetSize() * 0.75) >= mp_garbage[i]->GetY()
 				/*石鹸の上端 が 障害物の下端 より小さい*/
-				&& mp_character->GetAreaY() <= mp_garbage[i]->GetY() + 256)
+				&& mp_character->GetAreaY() + static_cast<int>(mp_character->GetSize() * 0.25) <= mp_garbage[i]->GetY() + 256)
 			{
+
 				mp_character->HitGarbageNow(i, static_cast<Character::EHitGarbageID>(mp_garbage[i]->GetID()));
 			}
 		}
@@ -532,15 +560,22 @@ void DragProject::Process()
 			{
 				mp_garbage[i]->Process(static_cast<int>(mp_character->GetSpeed() * 0.2f));
 			}
-			if (/*石鹸の右端 が 障害物の左端 より大きい*/
-				mp_character->GetAreaX() + mp_character->GetSize() >= mp_garbage[i]->GetX()
+
+
+			// 既に石鹸君に対して障害物が当たっているフレーム中だったら
+			if (mp_character->GetNowDamage() || mp_character->GetNowHeal()) continue;
+
+			// 当たり判定
+			if (/*石鹸の右端より1/4減らす が 障害物の左端 より大きい*/
+				mp_character->GetAreaX() + static_cast<int>(mp_character->GetSize() * 0.75) >= mp_garbage[i]->GetX()
 				/*石鹸の左端 が 障害物の左端と障害物の速度 より小さい*/
-				&& mp_character->GetAreaX() <= mp_garbage[i]->GetX() + static_cast<int>(mp_character->GetSpeed() * 0.25f)
+				&& mp_character->GetAreaX() + static_cast<int>(mp_character->GetSize() * 0.25) <= mp_garbage[i]->GetX() + 256
 				/*石鹸の下端 が 障害物の上端 より大きい*/
-				&& mp_character->GetAreaY() + mp_character->GetSize() >= mp_garbage[i]->GetY()
+				&& mp_character->GetAreaY() + static_cast<int>(mp_character->GetSize() * 0.75) >= mp_garbage[i]->GetY()
 				/*石鹸の上端 が 障害物の下端 より小さい*/
-				&& mp_character->GetAreaY() <= mp_garbage[i]->GetY() + 256)
+				&& mp_character->GetAreaY() + static_cast<int>(mp_character->GetSize() * 0.25) <= mp_garbage[i]->GetY() + 256)
 			{
+
 				mp_character->HitGarbageNow(i, static_cast<Character::EHitGarbageID>(mp_garbage[i]->GetID()));
 			}
 		}
@@ -584,7 +619,7 @@ void DragProject::Load(std::string strr)
 		count++;
 	}
 
-	for (int i = 0, n = mapdata.size(); i != n; ++i)
+	for (int i = 0, n = mapdata.size() - 1; i != n; ++i)
 	{
 		m_vChipAreaX.push_back(std::stoi(mapdata[i][0].c_str()));
 		m_vChipAreaY.push_back(std::stoi(mapdata[i][1].c_str()));
@@ -595,5 +630,5 @@ void DragProject::Load(std::string strr)
 	{
 		mp_garbage.push_back(new Garbage(m_vChipAreaX.at(i), m_vChipAreaY.at(i), static_cast<Garbage::EDrawID>(m_vChipID.at(i))));
 	}
-	mp_garbage.push_back(new Garbage(1920, 0, Garbage::EDrawID::doro));
+	//mp_garbage.push_back(new Garbage(1920, 0, Garbage::EDrawID::doro));
 }
